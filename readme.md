@@ -38,35 +38,32 @@ if not openai_api_key or not discord_bot_token:
 
 # Initialize OpenAI and Nextcord APIs
 openai.api_key = openai_api_key
-bot = commands.Bot(command_prefix='/', case_insensitive=True)
+intents = nextcord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='/', case_insensitive=True, intents=intents)
 
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
 
-@bot.command(name='Cthulhu')
-@commands.cooldown(1, 5, commands.BucketType.user)  # 1 request every 5 seconds per user
-async def cthulhu(ctx, *, question):
-    """Ask a question to the OpenAI GPT Plus model"""
+@bot.slash_command()
+async def csh(interaction: nextcord.Interaction, question: str):
+    """Ask a question to the Python Wizard of CSH"""
     try:
-        response = openai.Completion.create(
-          model="gpt-4.0-turbo",
-          prompt=question,
-          max_tokens=150
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[
+                {"role": "system", "content": "You are a helpful python coder. But will also have conversations with people about any no illicit topic they would like to discuss."},
+                {"role": "user", "content": question}
+            ]
         )
-        await ctx.send(response.choices[0].text.strip())
-    except Exception as e:
-        await ctx.send(f"Error: {e}")
 
-@cthulhu.error
-async def cthulhu_error(ctx, error):
-    if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(f"Wait {error.retry_after:.2f} seconds before asking Cthulhu again.")
-    else:
-        await ctx.send("An error occurred. Please try again later.")
+        await interaction.response.send_message(response['choices'][0]['message']['content'].strip())
+    except Exception as e:
+        await interaction.response.send_message(f"Error: {e}")
 
 # Run the bot
 bot.run(discord_bot_token)
 ```
 
-### CSH
+### Get your Bot Token, generate your OAuthURL etc... I aint gonna spoonfeed you right now...
